@@ -22,6 +22,15 @@ $ToolsZipPath     = Join-Path $Root $ToolsZipName
 $ToolsExtractDir  = Join-Path $Root 'translate-tools-main'
 $ToolsTargetDir   = Join-Path $Root 'tools'
 
+# ActionEditor4 / Editor & Game exes
+$EditorExeName    = 'Editor_v1020.exe'
+$GameExeName      = 'Game_v1020.exe'
+$EditorExePath    = Join-Path $Root $EditorExeName
+$GameExePath      = Join-Path $Root $GameExeName
+$AEZipUrl         = 'https://omoshiro-game.github.io/soft/ActionEditor4/ActionEditor4.zip'
+$AEZipName        = 'ActionEditor4.zip'
+$AEZipPath        = Join-Path $Root $AEZipName
+
 # --- Decide whether we need to create / reinstall Python ---
 $NeedPythonSetup = $true
 if (Test-Path $PythonExe) {
@@ -133,8 +142,64 @@ Copy-Item -Path $SourceToolsDir -Destination $ToolsTargetDir -Recurse
 Write-Host "==> tools folder refreshed from GitHub" -ForegroundColor Green
 
 # --- Install tools into local site-packages ---
-Write-Host "==> Installing tools (from tools\requirements.txt)"
+Write-Host "==> Installing Python requirements from tools\requirements.txt"
 & $PythonExe -m pip install --no-warn-script-location -r (Join-Path $ToolsTargetDir 'requirements.txt')
+
+# --- Download Editor_v1020.exe (and Game_v1020.exe) if needed ---
+if (-not (Test-Path $EditorExePath)) {
+    Write-Host "==> $EditorExeName not found in root – downloading ActionEditor4 package"
+
+    if (-not (Test-Path $AEZipPath)) {
+        Write-Host "==> Downloading $AEZipUrl"
+        Invoke-WebRequest -Uri $AEZipUrl -OutFile $AEZipPath
+    } else {
+        Write-Host "==> Using existing $AEZipPath"
+    }
+
+    # We will ONLY extract the EXEs we care about from the ActionEditor4_v1020 subfolder
+    Write-Host "==> Extracting required executables from ActionEditor4.zip"
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($AEZipPath)
+    try {
+        # Build a lookup of entries by normalized path (forward slashes, lowercase)
+        $entries = @{}
+        foreach ($entry in $zip.Entries) {
+            $norm = ($entry.FullName -replace '\\','/').ToLowerInvariant()
+            $entries[$norm] = $entry
+        }
+
+        # Always extract Editor_v1020.exe (since it's missing)
+        $editorEntryPath = 'actioneditor4_v1020/editor_v1020.exe'
+        if ($entries.ContainsKey($editorEntryPath)) {
+            $entry = $entries[$editorEntryPath]
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $EditorExePath, $true)
+            Write-Host "==> Extracted $EditorExeName"
+        } else {
+            Write-Warning "Could not find $EditorExeName inside ActionEditor4_v1020 in the ZIP."
+        }
+
+        # Extract Game_v1020.exe only if it's also missing
+        if (-not (Test-Path $GameExePath)) {
+            $gameEntryPath = 'actioneditor4_v1020/game_v1020.exe'
+            if ($entries.ContainsKey($gameEntryPath)) {
+                $entry = $entries[$gameEntryPath]
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $GameExePath, $true)
+                Write-Host "==> Extracted $GameExeName"
+            } else {
+                Write-Warning "Could not find $GameExeName inside ActionEditor4_v1020 in the ZIP."
+            }
+        } else {
+            Write-Host "==> $GameExeName already present, not extracting."
+        }
+    }
+    finally {
+        $zip.Dispose()
+    }
+} else {
+    Write-Host "==> $EditorExeName already present, skipping ActionEditor4 download/extract."
+}
 
 # --- Fetch agent.js and main.py ---
 function Download-With-Fallback($primary, $fallback, $dest) {
