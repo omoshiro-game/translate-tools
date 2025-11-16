@@ -2,13 +2,18 @@
 
 ## Prerequites
 
-All the tools needs to work with the latest version of the editor, and the latest version of the editor needs to work with the latest version of the game engine. Be sure to download them from [Official website](omoshiro-game.github.io/en/menu_game/ActionEditor4/).
+<details>
+  <summary>This is automatically done by the installer !</summary>
+    <p>
+    All the tools needs to work with the latest version of the editor, and the latest version of the editor needs to work with the latest version of the game engine. Be sure to download them from <a href="omoshiro-game.github.io/en/menu_game/ActionEditor4/">Official website</a> .</p>
+    <p>
+    While the game name being `Game_v1020.exe` is a requirement (for now), you can use tools like Resource Hacker to change its icon to your liking. 
+    Be sure to only use the `Editor_v1020.exe` and `Game_v1020.exe` to run editor and game, and not the game original engine as you want it updated to the latest version.
+    </p>
 
-While the game name being `Game_v1020.exe` is a requirement (for now), you can use tools like Resource Hacker to change its icon to your liking. 
-Be sure to only use the `Editor_v1020.exe` and `Game_v1020.exe` to run editor and game, and not the game original engine as you want it updated to the latest version.
+</details>
 
 ## Setup
-You may be interested to check [English editor patches](https://github.com/omoshiro-game/English_patch/) too.
 
 First, you need one time setup of tools from your game directory.
 
@@ -26,7 +31,11 @@ If it's still blocking, try downloading directly the [_setup-tools.ps1](https://
 
 Wait for it to finish, then you can close the blue window.
 
-If your game needs upgrading to 1020 (it may be), drop the latest `Editor_v1020.exe` next to the game exe and then use `upgrade_all.bat`.
+If your game needs upgrading to 1020 (it may be), then use `upgrade_all.bat` by entering on the blue window `.\upgrade_all.bat`. Just let the window open and close  many times and wait for it to be done.
+
+## Mod Loader
+
+Install it using `.\tools\_setup-modloader.ps1` as it would make the english text on the game less spaced, and allow you to put your mod apart from the game file (Into the `update` folder, see [Aquedi4 Mod Loader](https://github.com/omoshiro-game/aquedi4-modoader) ).
 
 ## Translating 
 
@@ -52,5 +61,7 @@ And you can do that for every `stg4_1020` file on the 'stg4' folder you have
 
 You'd need the [Aquedi4 Mod Loader](https://github.com/omoshiro-game/aquedi4-modoader) to do that. While being very flexible, it's mainly used to load mods file and patch font size on english computer. Get it from [Releases](https://github.com/omoshiro-game/aquedi4-modoader/releases/tag/0.0.1) and create an `update` folder with all your translation and modified data. They would overlay original files, like for example drop a `update/bmp/Title.bmp` with your custom 640x480 image to use as new menu background.
 
-You should not redistribute the `tools` folder, but you are encouraged to distribute the game with the mod loader and the `scripts` folder and `d3d9*.dll` files. That would make font a bit easier to read in english computer.
+You should not redistribute the `tools` folder, but you are encouraged to distribute the game with the mod loader and the `scripts` and `update` folder and `d3d9*.dll` files. That would make font a bit easier to read in english computer.
 
+
+You may be interested to check [English editor patches](https://github.com/omoshiro-game/English_patch/) too if you work with the editor a lot.
