@@ -22,7 +22,7 @@ def find_main_editor_window():
     for w in app.windows():
         title = w.window_text()
         # Find window that starts with the editor name and contains a stage file path
-        if title.startswith("アクションエディター4") and "stg4_" in title:
+        if title.startswith("アクションエディター4"):
             dlg = w
             print(f"✅ Found and set active editor window: {title}")
             return True
@@ -42,7 +42,7 @@ def init_editor(exe_path="Editor_v1020.exe"):
         return False
     
     # Wait a bit for the window to appear
-    time.sleep(2)
+    time.sleep(4)
 
     # Use the new robust function to find the window
     return find_main_editor_window()

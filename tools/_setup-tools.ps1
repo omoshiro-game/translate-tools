@@ -156,46 +156,44 @@ if (-not (Test-Path $EditorExePath)) {
         Write-Host "==> Using existing $AEZipPath"
     }
 
-    # We will ONLY extract the EXEs we care about from the ActionEditor4_v1020 subfolder
-    Write-Host "==> Extracting required executables from ActionEditor4.zip"
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-    $zip = [System.IO.Compression.ZipFile]::OpenRead($AEZipPath)
-    try {
-        # Build a lookup of entries by normalized path (forward slashes, lowercase)
-        $entries = @{}
-        foreach ($entry in $zip.Entries) {
-            $norm = ($entry.FullName -replace '\\','/').ToLowerInvariant()
-            $entries[$norm] = $entry
-        }
-
-        # Always extract Editor_v1020.exe (since it's missing)
-        $editorEntryPath = 'actioneditor4_v1020/editor_v1020.exe'
-        if ($entries.ContainsKey($editorEntryPath)) {
-            $entry = $entries[$editorEntryPath]
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $EditorExePath, $true)
-            Write-Host "==> Extracted $EditorExeName"
-        } else {
-            Write-Warning "Could not find $EditorExeName inside ActionEditor4_v1020 in the ZIP."
-        }
-
-        # Extract Game_v1020.exe only if it's also missing
-        if (-not (Test-Path $GameExePath)) {
-            $gameEntryPath = 'actioneditor4_v1020/game_v1020.exe'
-            if ($entries.ContainsKey($gameEntryPath)) {
-                $entry = $entries[$gameEntryPath]
-                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $GameExePath, $true)
-                Write-Host "==> Extracted $GameExeName"
-            } else {
-                Write-Warning "Could not find $GameExeName inside ActionEditor4_v1020 in the ZIP."
-            }
-        } else {
-            Write-Host "==> $GameExeName already present, not extracting."
-        }
+    # Use a temp directory to extract the ZIP
+    $AETempDir = Join-Path $Root 'ActionEditor4_tmp'
+    if (Test-Path $AETempDir) {
+        Remove-Item -Path $AETempDir -Recurse -Force
     }
-    finally {
-        $zip.Dispose()
+
+    Write-Host "==> Extracting ActionEditor4.zip to temp directory"
+    Expand-Archive -Path $AEZipPath -DestinationPath $AETempDir -Force
+
+    # In the ZIP, the files live under ActionEditor4_v1020
+    $SourceBaseDir = Join-Path $AETempDir 'ActionEditor4_v1020'
+    $EditorSource  = Join-Path $SourceBaseDir $EditorExeName
+    $GameSource    = Join-Path $SourceBaseDir $GameExeName
+
+    # Always copy Editor_v1020.exe (since it's missing)
+    if (Test-Path $EditorSource) {
+        Copy-Item -Path $EditorSource -Destination $EditorExePath -Force
+        Write-Host "==> Copied $EditorExeName to root"
+    } else {
+        Write-Warning "Could not find $EditorExeName inside ActionEditor4_v1020 in the ZIP."
+    }
+
+    # Copy Game_v1020.exe only if it's also missing
+    if (-not (Test-Path $GameExePath)) {
+        if (Test-Path $GameSource) {
+            Copy-Item -Path $GameSource -Destination $GameExePath -Force
+            Write-Host "==> Copied $GameExeName to root"
+        } else {
+            Write-Warning "Could not find $GameExeName inside ActionEditor4_v1020 in the ZIP."
+        }
+    } else {
+        Write-Host "==> $GameExeName already present, not copying."
+    }
+
+    # Clean up temp extraction directory
+    if (Test-Path $AETempDir) {
+        Remove-Item -Path $AETempDir -Recurse -Force
+        Write-Host "==> Cleaned up temporary ActionEditor4 extraction directory"
     }
 } else {
     Write-Host "==> $EditorExeName already present, skipping ActionEditor4 download/extract."
@@ -215,7 +213,7 @@ function Download-With-Fallback($primary, $fallback, $dest) {
 $RunBat = @"
 @echo off
 pushd "%~dp0"
-python\python.exe "%~dp0\upgrade_all.py"
+python\python.exe "%~dp0\tools\upgrade_all.py"
 popd
 "@
 Set-Content -Path (Join-Path $Root 'upgrade_all.bat') -Value $RunBat -Encoding ASCII
