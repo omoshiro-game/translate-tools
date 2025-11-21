@@ -3626,7 +3626,7 @@ def main():
     elif args.command == 'import':
         out_file = args.output
         if not out_file:
-            update_dir = args.in_file.parent / "update"
+            update_dir = "update" / args.in_file.parent 
             update_dir.mkdir(exist_ok=True)
             
             out_name = args.in_file.name[:-5] if args.in_file.name.endswith('.json') else args.in_file.name
